@@ -1,0 +1,74 @@
+export default {
+  install(Vue) {
+    Vue.prototype.SERVICE_URL = ''
+
+    Vue.prototype.isAndroid = function() {
+      let u = navigator.userAgent
+      let isAndroid = u.indexOf('Android') > -1 || u.indexOf('Adr') > -1 // 判断是否是 android终端
+      return isAndroid
+    }
+
+    Vue.prototype.isIOS = function() {
+      let u = navigator.userAgent
+      let isIOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/) // 判断是否是 ios终端
+      return isIOS
+    }
+
+    Vue.prototype.goPriorityAPP = function(url) {
+      if (this.isAndroid()) {
+        window.location.href = url
+        // window.WebViewJavascriptBridge.sendMessage(JSON.stringify({'id': 2, 'target': 'openURL', 'data': {'url': url}}))
+      } if (this.isIOS()) {
+        window.webkit.messageHandlers.WebViewJavascriptBridge.postMessage({ 'id': 2, 'target': 'openURL', 'data': { 'url': url }})
+      } else {
+        window.location.href = url
+      }
+    }
+
+    Vue.prototype.sendMessage = function(obj) {
+      if (this.isAndroid()) {
+        window.WebViewJavascriptBridge.sendMessage(JSON.stringify(obj))
+      } if (this.isIOS()) {
+        window.webkit.messageHandlers.WebViewJavascriptBridge.postMessage(obj)
+      }
+    }
+
+    Vue.prototype.setActionDidFinishFunction = function(finishFunction) {
+      if (this.isAndroid()) {
+        window.WebViewJavascriptBridge.actionDidFinish = finishFunction
+      } if (this.isIOS()) {
+        window.WebViewJavascriptBridge_actionDidFinish = finishFunction
+      }
+    }
+
+    /* 获取url键值对 */
+    Vue.prototype.getParamsFromUrl = function() {
+      var url = decodeURI(window.location.search) // 获取url中"?"符后的字串
+      var params = {}
+      if (url.indexOf('?') !== -1) {
+        var str = url.substr(1)
+        const strs = str.split('&')
+        for (var i = 0; i < strs.length; i++) {
+          params[strs[i].split('=')[0]] = unescape(strs[i].split('=')[1])
+        }
+      }
+      return params
+    }
+
+    Vue.prototype.getParams = function (paras) {
+      var url = decodeURI(window.location.href)
+      var paraString = url.substring(url.indexOf('?') + 1, url.length).split('&')
+      var returnValue
+      for (let i = 0; i < paraString.length; i++) {
+        var tempParas = paraString[i].split('=')[0]
+        var parasValue = paraString[i].split('=')[1]
+        if (tempParas === paras) { returnValue = parasValue }
+      }
+      if (typeof (returnValue) === 'undefined') {
+        return ''
+      } else {
+        return returnValue
+      }
+    }
+  }
+}
